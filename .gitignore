@@ -1,0 +1,24 @@
+# Build outputs
+Debug/
+Release/
+*.o
+*.d
+*.elf
+*.hex
+*.bin
+*.map
+*.list
+
+# IDE files
+.settings/
+.vscode/
+*.launch
+
+# Generated files
+*.tmp
+*.bak
+*~
+
+# System files
+.DS_Store
+Thumbs.db
