@@ -32,6 +32,7 @@
 #include "pid.h"
 #include "turn.h"
 #include "linearRegression.h"
+#include "sg90_test.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,6 +51,16 @@ typedef struct {
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+/* ========== 舵机调试测试开关 ========== */
+/* 设为 1 启用舵机测试模式，设为 0 正常运行 */
+#define ENABLE_SG90_TEST 0
+
+/* 舵机测试模式选择（仅当 ENABLE_SG90_TEST = 1 时生效） */
+#define SG90_TEST_MODE_SWEEP 1      // 扫动测试
+#define SG90_TEST_MODE_STEP  2      // 单步测试
+#define SG90_TEST_MODE SG90_TEST_MODE_SWEEP  // 当前测试模式
+
 #ifndef PI
 #define PI 3.14159265358979323846
 #endif
@@ -503,11 +514,36 @@ int main(void)
 	center_pid.Kd = 5;
 	
 	remote_oled_display_init(&remote_oled_display_handle);
-    remote_oled_display_set_key(remote_oled_display_handle, NULL, 0); 
-    remote_oled_display_oled_display_init(remote_oled_display_handle); 
-    
+    remote_oled_display_set_key(remote_oled_display_handle, NULL, 0);
+    remote_oled_display_oled_display_init(remote_oled_display_handle);
+
     HAL_UARTEx_ReceiveToIdle_IT(&huart2, uart2_recv_buffer, UART2_RECV_BUFFER_SIZE);
-	
+
+#if ENABLE_SG90_TEST
+	/* ========== 舵机调试测试模式 ========== */
+	printf("\r\n");
+	printf("========================================\r\n");
+	printf("  SG90 Test Mode Enabled\r\n");
+	printf("  Max Angle: +-%d deg\r\n", SG90_MAX_ANGLE);
+	printf("  Center Offset: %d us\r\n", SG90_CENTER_OFFSET);
+	printf("========================================\r\n");
+
+	HAL_Delay(1000);  // 给串口输出一点时间
+
+#if SG90_TEST_MODE == SG90_TEST_MODE_SWEEP
+	/* 扫动测试（无限循环） */
+	SG90_SteeringSweepTest();
+#elif SG90_TEST_MODE == SG90_TEST_MODE_STEP
+	/* 单步测试（循环执行） */
+	while(1) {
+		SG90_SingleStepTest();
+		HAL_Delay(3000);  // 每轮测试之间停顿3秒
+		printf("\r\n--- Repeat test in 3s ---\r\n\r\n");
+	}
+#else
+	#error "Invalid SG90_TEST_MODE! Use SG90_TEST_MODE_SWEEP or SG90_TEST_MODE_STEP"
+#endif
+#endif  /* ENABLE_SG90_TEST */
 
   /* USER CODE END 2 */
 
